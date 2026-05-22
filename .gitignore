@@ -32,3 +32,9 @@ memory_ai_research_notes.md
 memory_ai_dashboard.html
 notes/
 private/
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
