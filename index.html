@@ -779,6 +779,199 @@ section { margin-bottom: 40px; }
 }
 .cat-event { color: var(--ink-soft); flex: 1; }
 
+/* ===== Sticky Nav ===== */
+.site-nav {
+  position: sticky;
+  top: 12px;
+  z-index: 100;
+  background: var(--bg-paper);
+  border: var(--border-ink);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-hard);
+  margin: 0 0 28px 0;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.nav-brand {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.nav-brand .brand-slash { color: var(--ink-faded); margin: 0 4px; }
+.nav-links {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.nav-link {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--ink);
+  padding: 5px 10px;
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  transition: background 0.1s ease, border-color 0.1s ease;
+}
+.nav-link:hover { background: var(--yellow-soft); border-color: var(--ink); }
+.nav-link.active {
+  background: var(--yellow-hot);
+  border-color: var(--ink);
+  box-shadow: var(--shadow-hard-sm);
+}
+
+/* ===== Hero ===== */
+.hero {
+  margin-bottom: 36px;
+  padding: 8px 0 24px;
+  border-bottom: var(--border-ink);
+}
+.hero-eyebrow {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: var(--ink);
+  color: var(--yellow-hot);
+  padding: 3px 10px;
+  border-radius: 3px;
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: 52px;
+  line-height: 1.0;
+  margin-bottom: 14px;
+  letter-spacing: -0.03em;
+}
+.hero-lede {
+  font-family: var(--font-display);
+  font-size: 17px;
+  color: var(--ink-soft);
+  max-width: 720px;
+  line-height: 1.5;
+  margin-bottom: 22px;
+}
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-soft);
+  align-items: center;
+}
+.hero-meta strong { color: var(--ink); }
+.hero-meta .sep { color: var(--ink-faded); }
+
+/* Section anchors — keep content visible below sticky nav */
+section { scroll-margin-top: 92px; }
+
+/* ===== Footer ===== */
+.site-footer {
+  margin-top: 56px;
+  border-top: var(--border-ink);
+  padding-top: 28px;
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 32px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+.footer-brand {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.footer-links a {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  text-decoration: none;
+  padding: 3px 8px;
+  border: 1.5px solid var(--ink);
+  border-radius: var(--radius-sm);
+  background: var(--bg-paper);
+}
+.footer-links a:hover { background: var(--yellow-hot); }
+.footer-disclaim {
+  background: var(--bg-paper);
+  border: var(--border-thin);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 11px;
+  line-height: 1.55;
+}
+.footer-bottom {
+  grid-column: 1 / -1;
+  border-top: 1.5px dashed var(--ink);
+  padding-top: 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ===== Back-to-top ===== */
+.back-to-top {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 90;
+  background: var(--yellow-hot);
+  border: var(--border-ink);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-hard);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
+  padding: 9px 14px;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.back-to-top.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.back-to-top:hover { background: var(--ink); color: var(--yellow-hot); }
+
 @media (max-width: 768px) {
   body { padding: 16px; background-size: 18px 18px; }
   h1 { font-size: 26px; }
@@ -791,41 +984,63 @@ section { margin-bottom: 40px; }
   .position-card { padding: 18px; }
   .position-ticker { font-size: 22px; }
   .stat-value { font-size: 16px; }
+  .hero h1 { font-size: 34px; }
+  .hero-lede { font-size: 14px; }
+  .site-nav { padding: 8px 12px; gap: 10px; top: 8px; }
+  .nav-links { width: 100%; flex-wrap: nowrap; }
+  .site-footer { grid-template-columns: 1fr; gap: 24px; }
 }
 </style>
 </head>
 <body>
 <div class="container">
 
+<!-- Sticky Nav -->
+<nav class="site-nav" id="site-nav">
+  <a href="#top" class="nav-brand">MEMORY<span class="brand-slash">//</span>AI</a>
+  <div class="nav-links">
+    <a href="#status" class="nav-link">Status</a>
+    <a href="#cycle" class="nav-link">Cycle</a>
+    <a href="#earnings" class="nav-link">Earnings</a>
+    <a href="#watchlist" class="nav-link">Watchlist</a>
+    <a href="#signals" class="nav-link">Signals</a>
+    <a href="#framework" class="nav-link">Framework</a>
+    <a href="#catalysts" class="nav-link">Catalysts</a>
+    <a href="#sources" class="nav-link">Sources</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<header class="hero" id="top">
+  <span class="hero-eyebrow">Independent Research · Updated May 22, 2026</span>
+  <h1>The Memory &amp;<br>AI Supercycle</h1>
+  <p class="hero-lede">A snapshot of where we are in the memory semiconductor cycle — tracking the Big 3 memory makers, HBM supply chain, AI demand engines, and hyperscaler capex.</p>
+  <div class="hero-meta">
+    <span class="live-badge snapshot" id="live-badge"><span class="dot"></span>Snapshot</span>
+    <span><strong>Macro:</strong> NVDA + 4 hyperscalers all beat in last 30 days</span>
+    <span class="sep">·</span>
+    <span>Prices last fetched: <strong id="last-fetch">—</strong></span>
+  </div>
+</header>
+
 <!-- Disclaimer -->
 <div class="disclaimer">
   <strong>Disclaimer:</strong> This is a personal research dashboard tracking the memory semiconductor cycle. It is <strong>not investment advice</strong>, not a recommendation to buy or sell securities, and not financial guidance. Stock prices and figures shown here are auto-fetched from public sources and may be delayed or inaccurate; verify everything on your broker before making any decision. The author holds no liability for any actions taken based on this content.
 </div>
 
-<!-- Header -->
-<div class="header">
-  <div>
-    <h1>Memory &amp; AI Cycle Dashboard</h1>
-    <div class="subtitle">Tracking memory makers, packaging, and the AI supercycle <span class="live-badge snapshot" id="live-badge"><span class="dot"></span>Snapshot</span></div>
-  </div>
-  <div class="header-meta">
-    Research as of: <strong>May 22, 2026</strong><br>
-    Latest macro: <strong>NVDA + 4 hyperscalers all beat</strong> in last 30 days.
-    <br><span style="font-size: 11px;">Stock prices last fetched: <span id="last-fetch">—</span></span>
-  </div>
-</div>
-
 <!-- Status Banner -->
+<section id="status" style="margin-bottom: 0;">
 <div class="status-banner">
   <div class="status-banner-title">🟢 Cycle Status: Strongly Bullish — NVIDIA print confirms demand</div>
   <div class="status-banner-body">
     NVIDIA blew through Q1 ($81.6B vs $79.2B est) and guided Q2 to $91B — implies ~11% sequential growth on already-massive base. Data center $75.2B (+92% YoY). 75% gross margin. $80B new buyback + 25x dividend hike. Read-through to memory makers is unambiguously positive — Big 3 HBM allocations stay sold out. NVDA stock muted (-1.7%) on supply/China concerns, not demand. 10 of 11 signals bullish, 1 yellow (greenfield fab announcements). Watch for spot MoM growth dropping toward zero as the actual turn signal.
   </div>
 </div>
+</section>
 
 
 <!-- Cycle Stage -->
-<section>
+<section id="cycle">
   <h2>Where We Are in the Memory Cycle</h2>
   <div class="cycle-container">
     <div class="cycle-bar">
@@ -843,7 +1058,7 @@ section { margin-bottom: 40px; }
 </section>
 
 <!-- Earnings Pulse -->
-<section>
+<section id="earnings">
   <div class="section-header">
     <h2>Earnings Pulse — Last 30 Days</h2>
     <span class="note">Most recent quarterly print per ticker</span>
@@ -865,7 +1080,7 @@ section { margin-bottom: 40px; }
 </section>
 
 <!-- Stock Watchlist -->
-<section>
+<section id="watchlist">
   <div class="section-header">
     <h2>Stock Watchlist</h2>
     <span class="note">As of May 22, 2026</span>
@@ -876,7 +1091,7 @@ section { margin-bottom: 40px; }
 </section>
 
 <!-- Signals Dashboard -->
-<section>
+<section id="signals">
   <div class="section-header">
     <h2>Cycle-Turn Signal Dashboard</h2>
     <span class="note">🟢🟢 strong bullish • 🟢 bullish • 🟡 caution • 🔴 bearish</span>
@@ -887,7 +1102,7 @@ section { margin-bottom: 40px; }
 </section>
 
 <!-- Decision Framework -->
-<section>
+<section id="framework">
   <h2>Decision Framework — Sell Discipline</h2>
   <div class="decision-tier trim25">
     <h4>🟡 Trim 25% — when ANY THREE of these happen within a quarter</h4>
@@ -919,7 +1134,7 @@ section { margin-bottom: 40px; }
 </section>
 
 <!-- Upcoming Catalysts -->
-<section>
+<section id="catalysts">
   <h2>Upcoming Catalysts — Next 90 Days</h2>
   <div class="card">
     <div class="catalyst">
@@ -1001,7 +1216,7 @@ section { margin-bottom: 40px; }
 </section>
 
 <!-- Resource Links -->
-<section>
+<section id="sources">
   <h2>Free Data Sources</h2>
   <h3>Memory pricing & market data</h3>
   <div class="resource-grid">
@@ -1169,15 +1384,83 @@ section { margin-bottom: 40px; }
 </section>
 
 <!-- Footer -->
-<section style="margin-top: 48px; padding-top: 24px; border-top: 1px solid #e5e7eb;">
-  <div style="font-size: 11px; color: #9ca3af; text-align: center;">
-    Snapshot dashboard based on data as of May 22, 2026 • For research and discussion only • Not investment advice
+<footer class="site-footer">
+  <div>
+    <div class="footer-brand">MEMORY // AI</div>
+    <div>Independent research on the AI-driven memory semiconductor cycle. Tracking the Big 3 memory makers, HBM supply chain, AI demand engines, and hyperscaler capex — updated periodically as new data lands.</div>
+    <div class="footer-links" style="margin-top: 16px;">
+      <a href="#status">Status</a>
+      <a href="#cycle">Cycle</a>
+      <a href="#earnings">Earnings</a>
+      <a href="#watchlist">Watchlist</a>
+      <a href="#signals">Signals</a>
+      <a href="#framework">Framework</a>
+      <a href="#catalysts">Catalysts</a>
+      <a href="#sources">Sources</a>
+    </div>
   </div>
-</section>
+  <div class="footer-disclaim">
+    <strong style="color: var(--ink);">Not investment advice.</strong> Personal research dashboard only. Prices auto-fetched from public sources and may be delayed or inaccurate — verify on your broker. Author holds no liability for actions taken based on this content.
+  </div>
+  <div class="footer-bottom">
+    <span>Data as of May 22, 2026</span>
+    <span>Built static · Deployed on Cloudflare Pages</span>
+  </div>
+</footer>
+
+<!-- Back to top -->
+<button class="back-to-top" id="back-to-top" aria-label="Back to top">↑ Top</button>
 
 </div>
 
 <script>
+// ============================================================
+// NAV: active-link highlighting + back-to-top
+// ============================================================
+(function() {
+  const navLinks = document.querySelectorAll('.nav-link');
+  const sections = Array.from(navLinks)
+    .map(l => document.querySelector(l.getAttribute('href')))
+    .filter(Boolean);
+  const linkByHash = {};
+  navLinks.forEach(l => { linkByHash[l.getAttribute('href').slice(1)] = l; });
+
+  const setActive = (id) => {
+    navLinks.forEach(l => l.classList.remove('active'));
+    if (id && linkByHash[id]) linkByHash[id].classList.add('active');
+  };
+
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) setActive(e.target.id);
+      });
+    }, { rootMargin: '-30% 0px -60% 0px', threshold: 0 });
+    sections.forEach(s => io.observe(s));
+  }
+
+  // Back-to-top
+  const btt = document.getElementById('back-to-top');
+  const onScroll = () => {
+    if (window.scrollY > 600) btt.classList.add('show');
+    else btt.classList.remove('show');
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  btt.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+  // Smooth-scroll for nav links
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', (ev) => {
+      const id = a.getAttribute('href').slice(1);
+      const target = document.getElementById(id);
+      if (target) {
+        ev.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        history.replaceState(null, '', '#' + id);
+      }
+    });
+  });
+})();
+
 // ============================================================
 // CONFIG
 // ============================================================
