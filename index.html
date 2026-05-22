@@ -1,0 +1,1789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory & AI Cycle Dashboard</title>
+<meta name="description" content="A snapshot dashboard tracking the memory semiconductor cycle, HBM supply, hyperscaler capex, and AI-driven demand signals. Independent research, not investment advice.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light;
+
+  /* Palette — PostHog brutalist + Allium CRT */
+  --bg-cream: #f5f0e1;
+  --bg-paper: #fbf7eb;
+  --bg-card: #ffffff;
+  --ink: #1a1a1a;
+  --ink-soft: #4a4a4a;
+  --ink-faded: #8a8a8a;
+
+  --yellow-hot: #ffe24a;
+  --yellow-soft: #fff3a0;
+  --orange-hot: #ff9b50;
+  --coral: #ff7a7a;
+  --green-crt: #6ee787;
+  --green-strong: #2ecc71;
+  --green-soft: #c8f5d3;
+  --mint: #b3f5dc;
+  --red-alert: #ef4444;
+  --red-soft: #fecaca;
+  --blue-sky: #8fc7ff;
+  --purple-electric: #c4a8ff;
+  --pink-hot: #ffadd8;
+
+  /* System */
+  --border-ink: 2px solid var(--ink);
+  --border-thin: 1.5px solid var(--ink);
+  --shadow-hard: 4px 4px 0 var(--ink);
+  --shadow-hard-sm: 2px 2px 0 var(--ink);
+  --shadow-hard-lg: 6px 6px 0 var(--ink);
+  --radius-sm: 4px;
+  --radius-md: 6px;
+
+  --font-display: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-display);
+  background: var(--bg-cream);
+  background-image: radial-gradient(circle, rgba(0,0,0,0.12) 1px, transparent 1px);
+  background-size: 22px 22px;
+  background-position: 0 0;
+  color: var(--ink);
+  line-height: 1.5;
+  padding: 28px;
+}
+.container { max-width: 1280px; margin: 0 auto; }
+
+h1 {
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  line-height: 1.05;
+}
+h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 18px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+h3 {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 14px;
+}
+.subtitle {
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  margin-bottom: 28px;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 36px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.header-meta {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+.header-meta strong { color: var(--ink); }
+
+/* Live badge */
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border: var(--border-thin);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-hard-sm);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  background: var(--green-crt);
+  color: var(--ink);
+  text-transform: uppercase;
+  margin-left: 10px;
+}
+.live-badge.snapshot { background: var(--yellow-hot); }
+.live-badge .dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  background: var(--ink);
+  margin-right: 6px;
+  animation: pulse 2s infinite;
+}
+.live-badge.snapshot .dot { animation: none; }
+@keyframes pulse { 0%,100% {opacity:1;} 50% {opacity:0.3;} }
+
+/* Disclaimer */
+.disclaimer {
+  background: var(--yellow-hot);
+  border: var(--border-ink);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-hard);
+  padding: 16px 20px;
+  font-size: 12.5px;
+  font-family: var(--font-mono);
+  color: var(--ink);
+  margin-bottom: 28px;
+  line-height: 1.6;
+  position: relative;
+}
+.disclaimer::before {
+  content: 'DISCLAIMER';
+  position: absolute;
+  top: -10px;
+  left: 16px;
+  background: var(--ink);
+  color: var(--yellow-hot);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 2px 10px;
+  border-radius: 3px;
+}
+.disclaimer strong { font-weight: 700; }
+
+/* Cards & sections */
+.card {
+  background: var(--bg-card);
+  border: var(--border-ink);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-hard);
+  padding: 22px;
+  margin-bottom: 20px;
+}
+
+/* Cycle Stage */
+.cycle-container {
+  background: var(--bg-card);
+  border: var(--border-ink);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-hard);
+  padding: 8px;
+  margin: 20px 0;
+}
+.cycle-bar {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+.cycle-stage {
+  padding: 16px 8px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ink);
+  border: var(--border-thin);
+  border-radius: var(--radius-sm);
+  position: relative;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+.cycle-stage:nth-child(1) { background: var(--green-crt); }
+.cycle-stage:nth-child(2) { background: var(--mint); }
+.cycle-stage:nth-child(3) { background: var(--yellow-soft); }
+.cycle-stage:nth-child(4) { background: var(--yellow-hot); }
+.cycle-stage:nth-child(5) { background: var(--orange-hot); }
+.cycle-stage:nth-child(6) { background: var(--coral); }
+.cycle-stage.active {
+  background: var(--ink) !important;
+  color: var(--yellow-hot);
+  font-weight: 700;
+  box-shadow: var(--shadow-hard-sm);
+  border-color: var(--ink);
+}
+.cycle-stage.active::after {
+  content: '▼';
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--ink);
+  font-size: 16px;
+}
+.cycle-stage .stage-num {
+  display: block;
+  font-size: 18px;
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+.cycle-summary {
+  margin-top: 18px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+.cycle-summary strong { color: var(--ink); }
+
+/* Stock Cards */
+.stock-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+.stock-card {
+  background: var(--bg-card);
+  border: var(--border-ink);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-hard);
+  padding: 16px;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.stock-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-hard-lg);
+}
+.stock-ticker {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.stock-name {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--ink-soft);
+  margin-bottom: 12px;
+  letter-spacing: 0.02em;
+}
+.stock-price {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 700;
+  margin: 4px 0;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.stock-change {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-block;
+  padding: 2px 7px;
+  border: var(--border-thin);
+  border-radius: 3px;
+  margin-top: 4px;
+}
+.stock-change.up { background: var(--green-crt); color: var(--ink); }
+.stock-change.down { background: var(--coral); color: var(--ink); }
+.stock-tags {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border: var(--border-thin);
+  border-radius: 12px;
+  background: var(--bg-card);
+  color: var(--ink);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.tag.hbm { background: var(--blue-sky); }
+.tag.dram { background: var(--green-crt); }
+.tag.nand { background: var(--yellow-hot); }
+.tag.packaging { background: var(--pink-hot); }
+.tag.equipment { background: var(--purple-electric); }
+.tag.foundry { background: var(--mint); }
+.tag.gpu { background: var(--coral); }
+.tag.asic { background: #7ee0c8; }
+.tag.hyperscaler { background: #c8b8ff; }
+.tag.networking { background: var(--orange-hot); }
+
+/* Watchlist sub-sections */
+.watchlist-section { margin-bottom: 28px; }
+.watchlist-section:last-child { margin-bottom: 0; }
+.subsection-header {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--yellow-hot);
+  border: var(--border-thin);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-hard-sm);
+  display: inline-block;
+  padding: 5px 12px;
+  margin-bottom: 14px;
+}
+.subsection-header.demand { background: var(--coral); }
+.subsection-header.hyper { background: #c8b8ff; }
+.subsection-header.supply { background: var(--mint); }
+
+/* Earnings Pulse */
+.earnings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+.earnings-card {
+  background: var(--bg-card);
+  border: var(--border-ink);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-hard-sm);
+  padding: 14px;
+}
+.earnings-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+.earnings-ticker {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.earnings-date {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.earnings-badge {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border: var(--border-thin);
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
+  display: inline-block;
+}
+.earnings-badge.beat { background: var(--green-crt); }
+.earnings-badge.miss { background: var(--coral); }
+.earnings-badge.inline { background: var(--yellow-hot); }
+.earnings-badge.upcoming { background: var(--blue-sky); }
+.earnings-numbers {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink);
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+.earnings-numbers .label {
+  display: inline-block;
+  width: 56px;
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+.earnings-takeaway {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+  padding-top: 8px;
+  border-top: var(--border-thin);
+}
+.earnings-prior {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-soft);
+  margin-bottom: 8px;
+  letter-spacing: 0.02em;
+}
+.earnings-prior .pill {
+  display: inline-block;
+  padding: 1px 6px;
+  border: 1.5px solid var(--ink);
+  border-radius: 3px;
+  font-weight: 700;
+  font-size: 9px;
+  margin-left: 4px;
+  letter-spacing: 0.04em;
+}
+.earnings-prior .pill.beat { background: var(--green-crt); color: var(--ink); }
+.earnings-prior .pill.miss { background: var(--coral); color: var(--ink); }
+.earnings-prior .pill.inline { background: var(--yellow-hot); color: var(--ink); }
+.earnings-countdown {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  padding: 1px 6px;
+  background: var(--bg-paper);
+  border: 1px solid var(--ink-faded);
+  border-radius: 3px;
+  margin-left: 6px;
+}
+.earnings-countdown.imminent { background: var(--yellow-hot); border-color: var(--ink); color: var(--ink); }
+.stock-key-metric {
+  font-size: 10.5px;
+  font-family: var(--font-mono);
+  color: var(--ink-soft);
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: var(--border-thin);
+  line-height: 1.5;
+}
+
+/* Signals */
+.signals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+.signal {
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  background: var(--bg-card);
+  border: var(--border-ink);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-hard-sm);
+}
+.signal.green { background: var(--green-soft); }
+.signal.green-strong { background: var(--green-crt); }
+.signal.yellow { background: var(--yellow-hot); }
+.signal.red { background: var(--coral); }
+.signal-status { font-size: 18px; flex-shrink: 0; }
+.signal-content { flex: 1; }
+.signal-name {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  font-family: var(--font-display);
+}
+.signal-detail {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+/* Decision Framework */
+.decision-tier {
+  background: var(--bg-card);
+  border: var(--border-ink);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-hard);
+  padding: 20px;
+  margin-bottom: 14px;
+}
+.decision-tier h4 {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  font-family: var(--font-display);
+}
+.decision-tier.trim25 { background: var(--yellow-soft); }
+.decision-tier.trim50 { background: var(--orange-hot); }
+.decision-tier.exit { background: var(--coral); }
+.decision-tier ul {
+  margin-left: 20px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--ink);
+  line-height: 1.7;
+}
+.decision-tier li { margin-bottom: 4px; }
+
+/* Catalyst Timeline */
+.catalyst {
+  display: flex;
+  gap: 16px;
+  padding: 14px 4px;
+  border-bottom: 1.5px dashed var(--ink);
+  align-items: flex-start;
+}
+.catalyst:last-child { border-bottom: none; }
+.catalyst-date {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  min-width: 115px;
+  padding-top: 2px;
+}
+.catalyst-event { font-size: 13px; flex: 1; line-height: 1.5; }
+.catalyst-event strong { font-weight: 700; }
+.catalyst-importance {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  padding: 3px 8px;
+  border: var(--border-thin);
+  border-radius: 3px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  align-self: flex-start;
+}
+.imp-high { background: var(--coral); color: var(--ink); }
+.imp-med { background: var(--yellow-hot); color: var(--ink); }
+
+/* Resource Links */
+.resource-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
+}
+.resource {
+  display: block;
+  padding: 12px 14px;
+  background: var(--bg-card);
+  border: var(--border-ink);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-hard-sm);
+  text-decoration: none;
+  color: var(--ink);
+  font-size: 13px;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.1s ease;
+}
+.resource:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 var(--ink);
+  background: var(--yellow-hot);
+}
+.resource strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+.resource span {
+  font-size: 10.5px;
+  font-family: var(--font-mono);
+  color: var(--ink-soft);
+}
+
+/* Section spacing */
+section { margin-bottom: 40px; }
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 18px;
+  border-bottom: var(--border-ink);
+  padding-bottom: 8px;
+}
+.section-header h2 { margin-bottom: 0; }
+.section-header .note {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Status banner */
+.status-banner {
+  background: var(--green-crt);
+  border: var(--border-ink);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-hard);
+  padding: 20px;
+  margin-bottom: 32px;
+  position: relative;
+}
+.status-banner::before {
+  content: 'STATUS';
+  position: absolute;
+  top: -10px;
+  left: 16px;
+  background: var(--ink);
+  color: var(--yellow-hot);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 2px 10px;
+  border-radius: 3px;
+}
+.status-banner-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 6px;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+}
+.status-banner-body {
+  font-size: 12.5px;
+  font-family: var(--font-mono);
+  color: var(--ink);
+  line-height: 1.6;
+}
+
+/* Position Card */
+.position-card {
+  background: var(--bg-card);
+  border: var(--border-ink);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-hard-lg);
+  padding: 26px;
+  margin-bottom: 12px;
+  position: relative;
+}
+.position-card::before {
+  content: 'POSITION';
+  position: absolute;
+  top: -10px;
+  left: 18px;
+  background: var(--ink);
+  color: var(--yellow-hot);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 2px 10px;
+  border-radius: 3px;
+}
+.position-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: var(--border-ink);
+}
+.position-ticker {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.position-name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-top: 4px;
+  letter-spacing: 0.02em;
+}
+.position-status {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border: var(--border-ink);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-hard-sm);
+  letter-spacing: 0.08em;
+}
+.position-status.otm { background: var(--yellow-hot); color: var(--ink); }
+.position-status.itm { background: var(--green-crt); color: var(--ink); }
+.position-status.deep-otm { background: var(--coral); color: var(--ink); }
+
+.position-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.position-stat {
+  background: var(--bg-paper);
+  padding: 12px 14px;
+  border: var(--border-thin);
+  border-radius: var(--radius-sm);
+}
+.stat-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-soft);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+.stat-value {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.position-context {
+  background: var(--yellow-soft);
+  border: var(--border-thin);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  font-size: 12.5px;
+  font-family: var(--font-mono);
+  color: var(--ink);
+  margin-bottom: 18px;
+  line-height: 1.6;
+}
+.position-context strong { font-weight: 700; }
+
+.position-catalysts {
+  background: var(--bg-paper);
+  padding: 16px 18px;
+  border: var(--border-thin);
+  border-radius: var(--radius-sm);
+}
+.position-catalysts h4 {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  margin-bottom: 12px;
+}
+.catalyst-inline {
+  display: flex;
+  gap: 14px;
+  padding: 6px 0;
+  font-size: 12px;
+  font-family: var(--font-mono);
+}
+.cat-date {
+  font-weight: 700;
+  color: var(--ink);
+  min-width: 110px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.cat-event { color: var(--ink-soft); flex: 1; }
+
+@media (max-width: 768px) {
+  body { padding: 16px; background-size: 18px 18px; }
+  h1 { font-size: 26px; }
+  .header { flex-direction: column; }
+  .header-meta { text-align: left; }
+  .stock-card { padding: 14px; }
+  .signal { padding: 12px; }
+  .cycle-stage { font-size: 9px; padding: 12px 4px; }
+  .cycle-stage .stage-num { font-size: 14px; }
+  .position-card { padding: 18px; }
+  .position-ticker { font-size: 22px; }
+  .stat-value { font-size: 16px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- Disclaimer -->
+<div class="disclaimer">
+  <strong>Disclaimer:</strong> This is a personal research dashboard tracking the memory semiconductor cycle. It is <strong>not investment advice</strong>, not a recommendation to buy or sell securities, and not financial guidance. Stock prices and figures shown here are auto-fetched from public sources and may be delayed or inaccurate; verify everything on your broker before making any decision. The author holds no liability for any actions taken based on this content.
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div>
+    <h1>Memory &amp; AI Cycle Dashboard</h1>
+    <div class="subtitle">Tracking memory makers, packaging, and the AI supercycle <span class="live-badge snapshot" id="live-badge"><span class="dot"></span>Snapshot</span></div>
+  </div>
+  <div class="header-meta">
+    Research as of: <strong>May 22, 2026</strong><br>
+    Latest macro: <strong>NVDA + 4 hyperscalers all beat</strong> in last 30 days.
+    <br><span style="font-size: 11px;">Stock prices last fetched: <span id="last-fetch">—</span></span>
+  </div>
+</div>
+
+<!-- Status Banner -->
+<div class="status-banner">
+  <div class="status-banner-title">🟢 Cycle Status: Strongly Bullish — NVIDIA print confirms demand</div>
+  <div class="status-banner-body">
+    NVIDIA blew through Q1 ($81.6B vs $79.2B est) and guided Q2 to $91B — implies ~11% sequential growth on already-massive base. Data center $75.2B (+92% YoY). 75% gross margin. $80B new buyback + 25x dividend hike. Read-through to memory makers is unambiguously positive — Big 3 HBM allocations stay sold out. NVDA stock muted (-1.7%) on supply/China concerns, not demand. 10 of 11 signals bullish, 1 yellow (greenfield fab announcements). Watch for spot MoM growth dropping toward zero as the actual turn signal.
+  </div>
+</div>
+
+
+<!-- Cycle Stage -->
+<section>
+  <h2>Where We Are in the Memory Cycle</h2>
+  <div class="cycle-container">
+    <div class="cycle-bar">
+      <div class="cycle-stage active"><span class="stage-num">1</span>Demand cooling at margin</div>
+      <div class="cycle-stage"><span class="stage-num">2</span>Spot prices weaken</div>
+      <div class="cycle-stage"><span class="stage-num">3</span>Inventory builds</div>
+      <div class="cycle-stage"><span class="stage-num">4</span>Contracts roll over</div>
+      <div class="cycle-stage"><span class="stage-num">5</span>Earnings decline</div>
+      <div class="cycle-stage"><span class="stage-num">6</span>Capitulation</div>
+    </div>
+  </div>
+  <div class="cycle-summary">
+    Estimated position: <strong>late Stage 1 — first signs of demand momentum stalling at the edges</strong>. Spot price momentum slowing in May 2026 is the earliest hint. Stocks typically peak ~6 months before earnings actually turn. Mid-Stage 2 to early Stage 4 is the sell zone.
+  </div>
+</section>
+
+<!-- Earnings Pulse -->
+<section>
+  <div class="section-header">
+    <h2>Earnings Pulse — Last 30 Days</h2>
+    <span class="note">Most recent quarterly print per ticker</span>
+  </div>
+  <div id="earnings-container">
+    <!-- Sub-sections populated by JS -->
+  </div>
+</section>
+
+<!-- Upcoming Earnings -->
+<section>
+  <div class="section-header">
+    <h2>Earnings Preview — Next 90 Days</h2>
+    <span class="note">Consensus estimates &amp; what to watch</span>
+  </div>
+  <div id="upcoming-earnings-container">
+    <!-- Sub-sections populated by JS -->
+  </div>
+</section>
+
+<!-- Stock Watchlist -->
+<section>
+  <div class="section-header">
+    <h2>Stock Watchlist</h2>
+    <span class="note">As of May 22, 2026</span>
+  </div>
+  <div id="watchlist-container">
+    <!-- Sub-sections populated by JS -->
+  </div>
+</section>
+
+<!-- Signals Dashboard -->
+<section>
+  <div class="section-header">
+    <h2>Cycle-Turn Signal Dashboard</h2>
+    <span class="note">🟢🟢 strong bullish • 🟢 bullish • 🟡 caution • 🔴 bearish</span>
+  </div>
+  <div class="signals-grid" id="signals-grid">
+    <!-- Signals populated by JS -->
+  </div>
+</section>
+
+<!-- Decision Framework -->
+<section>
+  <h2>Decision Framework — Sell Discipline</h2>
+  <div class="decision-tier trim25">
+    <h4>🟡 Trim 25% — when ANY THREE of these happen within a quarter</h4>
+    <ul>
+      <li>Spot DRAM prices flat or down for 2+ consecutive months</li>
+      <li>Hyperscaler capex guidance held (no further raise) on a quarterly call</li>
+      <li>Big 3 supplier inventory ticks up &gt;1 week sequentially</li>
+      <li>Any greenfield fab announcement scaled beyond current plans</li>
+      <li>NVIDIA supply purchase commitments stop growing</li>
+    </ul>
+  </div>
+  <div class="decision-tier trim50">
+    <h4>🟠 Trim 50% — when ANY of these</h4>
+    <ul>
+      <li>Contract DRAM/NAND prices roll over at renewal</li>
+      <li>Hyperscaler capex guidance gets cut on a quarterly call</li>
+      <li>Big 3 announce material capex acceleration (not just upgrade)</li>
+      <li>Memory maker guidance uses "normalization" or "moderation" first time</li>
+    </ul>
+  </div>
+  <div class="decision-tier exit">
+    <h4>🔴 Exit aggressively — when ANY</h4>
+    <ul>
+      <li>Two of Big 3 miss earnings or guide down same quarter</li>
+      <li>Sell-side downgrade wave (3+ within 60 days)</li>
+      <li>Inventory writedowns appear in earnings reports</li>
+    </ul>
+  </div>
+</section>
+
+<!-- Upcoming Catalysts -->
+<section>
+  <h2>Upcoming Catalysts — Next 90 Days</h2>
+  <div class="card">
+    <div class="catalyst">
+      <div class="catalyst-date">May 28</div>
+      <div class="catalyst-event"><strong>Marvell Q1 FY27 earnings</strong> — AWS Trainium ramp, MSFT Maia commentary, AI rev trajectory toward $2B/qtr run-rate. Read-through to custom-silicon HBM mix shift</div>
+      <span class="catalyst-importance imp-high">High</span>
+    </div>
+    <div class="catalyst">
+      <div class="catalyst-date">Jun 2-5</div>
+      <div class="catalyst-event"><strong>Computex Taipei 2026</strong> — NVIDIA, AMD, Intel keynotes. Rubin roadmap updates, AMD MI350 reveal expected</div>
+      <span class="catalyst-importance imp-med">Medium</span>
+    </div>
+    <div class="catalyst">
+      <div class="catalyst-date">Jun 5</div>
+      <div class="catalyst-event"><strong>Broadcom Q2 FY26 earnings</strong> — AI rev guide $10.7B → actual. New XPU customer announcements would be huge. Cleanest read on custom-silicon momentum</div>
+      <span class="catalyst-importance imp-high">High</span>
+    </div>
+    <div class="catalyst">
+      <div class="catalyst-date">Late June</div>
+      <div class="catalyst-event"><strong>Micron Q3 FY26 earnings</strong> — margin trajectory toward 81% guide, HBM4 ramp commentary, FY27 capex framework</div>
+      <span class="catalyst-importance imp-high">High</span>
+    </div>
+    <div class="catalyst">
+      <div class="catalyst-date">Jul 17</div>
+      <div class="catalyst-event"><strong>TSMC Q2 2026 earnings</strong> — CoWoS allocation by customer, GM trajectory, FY revenue guide update. Sets tone for AI infra demand</div>
+      <span class="catalyst-importance imp-high">High</span>
+    </div>
+    <div class="catalyst">
+      <div class="catalyst-date">Jul 23</div>
+      <div class="catalyst-event"><strong>SK Hynix Q2 2026 earnings</strong> — HBM4 NVIDIA Rubin allocation, capex update, OP margin sustainability</div>
+      <span class="catalyst-importance imp-high">High</span>
+    </div>
+    <div class="catalyst">
+      <div class="catalyst-date">Late July</div>
+      <div class="catalyst-event"><strong>Samsung Q2 2026 earnings</strong> — HBM4 qualification progress at NVIDIA (the catch-up story), foundry losses, capex</div>
+      <span class="catalyst-importance imp-med">Medium</span>
+    </div>
+    <div class="catalyst">
+      <div class="catalyst-date">Jul 24-25</div>
+      <div class="catalyst-event"><strong>Nokia Q2 2026 earnings</strong> — momentum check after Q1 beat. Network Infra acceleration would extend AI-RAN rally</div>
+      <span class="catalyst-importance imp-med">Medium</span>
+    </div>
+    <div class="catalyst">
+      <div class="catalyst-date">Jul 28 - Aug 1</div>
+      <div class="catalyst-event"><strong>Hyperscaler Q2 earnings cluster</strong> — MSFT (Jul 29), META (Jul 29), GOOG (Jul 28), AMZN (Jul 31). Capex guidance for 2H26 / 2027. The single most important week for memory demand outlook</div>
+      <span class="catalyst-importance imp-high">High</span>
+    </div>
+    <div class="catalyst">
+      <div class="catalyst-date">Late July</div>
+      <div class="catalyst-event"><strong>Advantest, Amkor Q2 earnings</strong> — equipment/packaging book-to-bill, AI tester demand, CoWoS-S/L outlook</div>
+      <span class="catalyst-importance imp-med">Medium</span>
+    </div>
+    <div class="catalyst">
+      <div class="catalyst-date">Aug 4-5</div>
+      <div class="catalyst-event"><strong>AMD Q2 2026 earnings</strong> — MI350 ramp data, Q3 guide (vs $11.2B Q2 actual), MSFT/META design-win monetization</div>
+      <span class="catalyst-importance imp-high">High</span>
+    </div>
+    <div class="catalyst">
+      <div class="catalyst-date">Aug 13-14</div>
+      <div class="catalyst-event"><strong>SanDisk earnings</strong> — enterprise SSD AI demand check. NAND ASP trajectory</div>
+      <span class="catalyst-importance imp-med">Medium</span>
+    </div>
+    <div class="catalyst">
+      <div class="catalyst-date">Aug 19-21</div>
+      <div class="catalyst-event"><strong>Hot Chips 2026 (Stanford)</strong> — annual semi/AI architecture conference. Big chip reveals from NVIDIA, Google, Meta, custom silicon teams</div>
+      <span class="catalyst-importance imp-med">Medium</span>
+    </div>
+    <div class="catalyst">
+      <div class="catalyst-date">Aug 21-23</div>
+      <div class="catalyst-event"><strong>Jackson Hole Symposium</strong> — Powell speech. Rate path commentary impacts long-duration tech multiples</div>
+      <span class="catalyst-importance imp-med">Medium</span>
+    </div>
+    <div class="catalyst">
+      <div class="catalyst-date">Aug 27</div>
+      <div class="catalyst-event"><strong>NVIDIA Q2 FY27 earnings</strong> — Rubin transition commentary, datacenter growth rate, hyperscaler order book disclosure</div>
+      <span class="catalyst-importance imp-high">High</span>
+    </div>
+  </div>
+</section>
+
+<!-- Resource Links -->
+<section>
+  <h2>Free Data Sources</h2>
+  <h3>Memory pricing & market data</h3>
+  <div class="resource-grid">
+    <a href="https://www.dramexchange.com/Market/market_activity" target="_blank" rel="noopener" class="resource">
+      <strong>★ DRAMeXchange Market Activity</strong>
+      <span>DXI index, daily express • free, primary source</span>
+    </a>
+    <a href="https://www.trendforce.com/news" target="_blank" rel="noopener" class="resource">
+      <strong>★ TrendForce Insights</strong>
+      <span>Weekly spot price updates • free</span>
+    </a>
+    <a href="https://www.trendforce.com/presscenter/news" target="_blank" rel="noopener" class="resource">
+      <strong>TrendForce Press Center</strong>
+      <span>Quarterly forecasts • free</span>
+    </a>
+    <a href="https://www.trendforce.com/price/dram/dram_spot" target="_blank" rel="noopener" class="resource">
+      <strong>TrendForce DRAM Price Trend</strong>
+      <span>Spot price overview • free</span>
+    </a>
+    <a href="https://counterpointresearch.com/insights/global-nand-memory-market-share" target="_blank" rel="noopener" class="resource">
+      <strong>Counterpoint Research</strong>
+      <span>Quarterly market share • free</span>
+    </a>
+    <a href="https://www.tomshardware.com/pc-components/ram/ram-price-index-2026-lowest-price-on-ddr5-and-ddr4-memory-of-all-capacities" target="_blank" rel="noopener" class="resource">
+      <strong>Tom's Hardware RAM Index</strong>
+      <span>Weekly DDR5/DDR4 retail • free</span>
+    </a>
+    <a href="https://thememoryguy.com" target="_blank" rel="noopener" class="resource">
+      <strong>The Memory Guy Blog</strong>
+      <span>Jim Handy analysis • free</span>
+    </a>
+  </div>
+
+  <h3 style="margin-top: 24px;">Analysis & research</h3>
+  <div class="resource-grid">
+    <a href="https://semianalysis.com" target="_blank" rel="noopener" class="resource">
+      <strong>SemiAnalysis</strong>
+      <span>Dylan Patel • Substack, partly free</span>
+    </a>
+    <a href="https://www.uncoveralpha.com" target="_blank" rel="noopener" class="resource">
+      <strong>Uncover Alpha</strong>
+      <span>Memory cycle analysis • Substack</span>
+    </a>
+    <a href="https://www.digitimes.com" target="_blank" rel="noopener" class="resource">
+      <strong>Digitimes</strong>
+      <span>Taiwan/Asia semiconductor news</span>
+    </a>
+    <a href="https://semiengineering.com" target="_blank" rel="noopener" class="resource">
+      <strong>SemiEngineering</strong>
+      <span>Technical deep dives • free</span>
+    </a>
+  </div>
+
+  <h3 style="margin-top: 24px;">🇰🇷 Korean coverage (SK Hynix, Samsung — break news first)</h3>
+  <div class="resource-grid">
+    <a href="https://www.thelec.net" target="_blank" rel="noopener" class="resource">
+      <strong>★ The Elec (English)</strong>
+      <span>Semiconductor-only • supply chain leaks • free</span>
+    </a>
+    <a href="https://www.kedglobal.com" target="_blank" rel="noopener" class="resource">
+      <strong>★ KED Global</strong>
+      <span>Korea Economic Daily English • Hynix/Samsung scoops</span>
+    </a>
+    <a href="https://www.businesskorea.co.kr" target="_blank" rel="noopener" class="resource">
+      <strong>Business Korea</strong>
+      <span>Daily English business news • free</span>
+    </a>
+    <a href="https://www.theinvestor.co.kr" target="_blank" rel="noopener" class="resource">
+      <strong>The Investor</strong>
+      <span>Korea Herald's IR-focused brand</span>
+    </a>
+    <a href="https://pulsenews.co.kr" target="_blank" rel="noopener" class="resource">
+      <strong>Pulse by Maekyung</strong>
+      <span>Maeil Business English • chaebol coverage</span>
+    </a>
+    <a href="https://en.yna.co.kr/list/AEN0501000000.html" target="_blank" rel="noopener" class="resource">
+      <strong>Yonhap Tech (English)</strong>
+      <span>Official wire • free, fast</span>
+    </a>
+    <a href="https://english.etnews.com" target="_blank" rel="noopener" class="resource">
+      <strong>ETNews English</strong>
+      <span>Korean tech wire • supply-chain leaks</span>
+    </a>
+    <a href="https://www.koreaherald.com/section/business" target="_blank" rel="noopener" class="resource">
+      <strong>Korea Herald Business</strong>
+      <span>Broader chaebol/policy context</span>
+    </a>
+  </div>
+
+  <h3 style="margin-top: 24px;">🇨🇳 🇹🇼 🌏 China, Taiwan & Asia broader</h3>
+  <div class="resource-grid">
+    <a href="https://asia.nikkei.com/Business/Tech/Semiconductors" target="_blank" rel="noopener" class="resource">
+      <strong>★ Nikkei Asia — Semiconductors</strong>
+      <span>Best-in-class Asia chip reporting • partly paywalled</span>
+    </a>
+    <a href="https://www.scmp.com/tech" target="_blank" rel="noopener" class="resource">
+      <strong>SCMP Tech</strong>
+      <span>South China Morning Post • CXMT/YMTC/Huawei</span>
+    </a>
+    <a href="https://www.caixinglobal.com/technology/" target="_blank" rel="noopener" class="resource">
+      <strong>Caixin Global — Tech</strong>
+      <span>Mainland English-language business journalism</span>
+    </a>
+    <a href="https://www.reuters.com/technology/" target="_blank" rel="noopener" class="resource">
+      <strong>Reuters Technology</strong>
+      <span>Seoul/Taipei/Tokyo bureau scoops • free</span>
+    </a>
+    <a href="https://www.bloomberg.com/asia" target="_blank" rel="noopener" class="resource">
+      <strong>Bloomberg Asia</strong>
+      <span>Tight on Hynix/TSMC/Samsung • paywalled</span>
+    </a>
+    <a href="https://www.taipeitimes.com/News/biz" target="_blank" rel="noopener" class="resource">
+      <strong>Taipei Times Business</strong>
+      <span>TSMC ecosystem • free English</span>
+    </a>
+  </div>
+
+  <h3 style="margin-top: 24px;">𝕏 / Substack people worth following</h3>
+  <div class="resource-grid">
+    <a href="https://x.com/dylan522p" target="_blank" rel="noopener" class="resource">
+      <strong>★ @dylan522p (Dylan Patel)</strong>
+      <span>SemiAnalysis founder • CoWoS/HBM intel</span>
+    </a>
+    <a href="https://x.com/SKundojjala" target="_blank" rel="noopener" class="resource">
+      <strong>@SKundojjala</strong>
+      <span>SemiAnalysis • memory cycle takes</span>
+    </a>
+    <a href="https://x.com/TheLastBearSta1" target="_blank" rel="noopener" class="resource">
+      <strong>@TheLastBearSta1</strong>
+      <span>Memory cycle bear-then-bull • thoughtful</span>
+    </a>
+    <a href="https://x.com/dnystedt" target="_blank" rel="noopener" class="resource">
+      <strong>@dnystedt (Dan Nystedt)</strong>
+      <span>Taipei-based • TSMC/foundry beat</span>
+    </a>
+    <a href="https://x.com/RetailedInvest" target="_blank" rel="noopener" class="resource">
+      <strong>@RetailedInvest</strong>
+      <span>Korean news translator • Hynix headlines</span>
+    </a>
+    <a href="https://x.com/chiakokhua" target="_blank" rel="noopener" class="resource">
+      <strong>@chiakokhua</strong>
+      <span>Robert Castellano • semi-equipment</span>
+    </a>
+  </div>
+
+  <h3 style="margin-top: 24px;">Earnings & filings</h3>
+  <div class="resource-grid">
+    <a href="https://investors.micron.com" target="_blank" rel="noopener" class="resource">
+      <strong>Micron Investor Relations</strong>
+      <span>Earnings calls & 10-Qs</span>
+    </a>
+    <a href="https://www.skhynix.com/eng/ir/ir.do" target="_blank" rel="noopener" class="resource">
+      <strong>SK Hynix IR</strong>
+      <span>Quarterly results</span>
+    </a>
+    <a href="https://investor.samsung.com" target="_blank" rel="noopener" class="resource">
+      <strong>Samsung IR</strong>
+      <span>Quarterly results</span>
+    </a>
+    <a href="https://investor.nvidia.com" target="_blank" rel="noopener" class="resource">
+      <strong>NVIDIA IR</strong>
+      <span>Quarterly results & guides</span>
+    </a>
+  </div>
+</section>
+
+<!-- Footer -->
+<section style="margin-top: 48px; padding-top: 24px; border-top: 1px solid #e5e7eb;">
+  <div style="font-size: 11px; color: #9ca3af; text-align: center;">
+    Snapshot dashboard based on data as of May 22, 2026 • For research and discussion only • Not investment advice
+  </div>
+</section>
+
+</div>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+// The placeholder below is replaced at deploy time by the GitHub
+// Actions workflow (.github/workflows/deploy.yml) using the
+// FINNHUB_KEY repo secret. If you open this file locally or fork
+// the repo without setting the secret, the placeholder stays as-is
+// and the page automatically falls back to snapshot mode.
+// ============================================================
+const FINNHUB_KEY = '__FINNHUB_KEY_PLACEHOLDER__';
+
+// Stock data — snapshot as of May 22, 2026 (used as fallback)
+const stocks = [
+  // ===== Memory Makers =====
+  {
+    ticker: 'MU', category: 'memory',
+    name: 'Micron Technology',
+    exchange: 'NASDAQ',
+    price: 755.28,
+    prevClose: 762.10,
+    tags: [{label: 'DRAM', cls: 'dram'}, {label: 'HBM', cls: 'hbm'}, {label: 'NAND', cls: 'nand'}],
+    keyMetric: '+8% in 2 days on NVDA print • FY26 Q2 GM 68%, guiding 81% • EPS est $58 • 2026 HBM sold out'
+  },
+  {
+    ticker: 'HXSCL', category: 'memory',
+    name: 'SK Hynix (OTC)',
+    exchange: 'OTC',
+    price: null,
+    prevClose: null,
+    skipLiveFetch: true,
+    note: 'OTC pink — verify on broker. Primary KRX 000660 hit all-time high May 15, 2026',
+    tags: [{label: 'HBM', cls: 'hbm'}, {label: 'DRAM', cls: 'dram'}, {label: 'NAND', cls: 'nand'}],
+    keyMetric: 'Q1 2026: 72% OP margin, 79% GM • 3+ yrs HBM forward book • HBM market leader'
+  },
+  {
+    ticker: 'SSNLF', category: 'memory',
+    name: 'Samsung Electronics (OTC)',
+    exchange: 'OTC',
+    price: 65.21,
+    prevClose: null,
+    skipLiveFetch: true,
+    tags: [{label: 'DRAM', cls: 'dram'}, {label: 'NAND', cls: 'nand'}, {label: 'Foundry', cls: 'foundry'}],
+    keyMetric: 'Q1 2026: DS division op profit +48x YoY • 90%+ of earnings from memory now • Mkt cap ~$1.16T'
+  },
+  {
+    ticker: 'SNDK', category: 'memory',
+    name: 'SanDisk Corp',
+    exchange: 'NASDAQ',
+    price: 1479.41,
+    prevClose: 1542.24,
+    tags: [{label: 'NAND', cls: 'nand'}],
+    keyMetric: 'Spun out from WDC late 2025 • +7% post-NVDA, then -4% profit-taking • ~13% NAND share'
+  },
+
+  // ===== Memory Supply Chain =====
+  {
+    ticker: 'TSM', category: 'supply',
+    name: 'Taiwan Semiconductor',
+    exchange: 'NYSE',
+    price: 407.15,
+    prevClose: 407.15,
+    tags: [{label: 'Foundry', cls: 'foundry'}, {label: 'CoWoS', cls: 'packaging'}],
+    keyMetric: 'Q1 2026: $35.9B rev (+35% YoY) • GM 66% • $1.8T mkt cap • Avg PT $467 (+15% upside)'
+  },
+  {
+    ticker: 'AMKR', category: 'supply',
+    name: 'Amkor Technology',
+    exchange: 'NASDAQ',
+    price: 65.40,
+    prevClose: 68.49,
+    tags: [{label: 'Packaging', cls: 'packaging'}],
+    keyMetric: 'Lagging the group (-4.5%) • TSMC outsourcing 180-190K CoWoS wafers/yr • $7B Arizona facility'
+  },
+  {
+    ticker: 'ATEYY', category: 'supply',
+    name: 'Advantest (Test ADR)',
+    exchange: 'OTC',
+    price: 169.87,
+    prevClose: 170.58,
+    skipLiveFetch: true,
+    tags: [{label: 'Equipment', cls: 'equipment'}],
+    keyMetric: '~70% global test equipment share • FY26 guide $9B (+26% YoY) • HBM tester monopoly'
+  },
+
+  // ===== AI Demand Engines =====
+  {
+    ticker: 'NVDA', category: 'demand',
+    name: 'NVIDIA',
+    exchange: 'NASDAQ',
+    price: 219.51,
+    prevClose: 223.46,
+    tags: [{label: 'GPU/AI', cls: 'gpu'}],
+    keyMetric: 'EARNINGS BEAT (5/20): $81.6B rev (+85% YoY) vs $79.2B est • EPS $1.87 vs $1.78 • Q2 guide $91B • Stock -1.7% (supply/China overhang) • ~70% of HBM allocation'
+  },
+  {
+    ticker: 'AMD', category: 'demand',
+    name: 'Advanced Micro Devices',
+    exchange: 'NASDAQ',
+    price: 284.49,
+    prevClose: 274.96,
+    tags: [{label: 'GPU/AI', cls: 'gpu'}],
+    keyMetric: '#2 HBM customer (~12-15% allocation) • MI350 ramping H2 2026 • Recent MSFT/META design wins • +3.5% on day, riding NVDA halo'
+  },
+  {
+    ticker: 'AVGO', category: 'demand',
+    name: 'Broadcom',
+    exchange: 'NASDAQ',
+    price: 402.17,
+    prevClose: 399.62,
+    tags: [{label: 'ASIC', cls: 'asic'}, {label: 'Networking', cls: 'networking'}],
+    keyMetric: 'Custom ASICs for Google TPU + Meta MTIA • AI rev $12B+ run-rate • Cleanest read on custom-silicon HBM share gains'
+  },
+  {
+    ticker: 'MRVL', category: 'demand',
+    name: 'Marvell Technology',
+    exchange: 'NASDAQ',
+    price: 151.31,
+    prevClose: 147.84,
+    tags: [{label: 'ASIC', cls: 'asic'}],
+    keyMetric: 'Custom ASIC for MSFT Maia + AWS Trainium • Smaller scale than AVGO • Pure-play AI ASIC bet'
+  },
+  {
+    ticker: 'NOK', category: 'demand',
+    name: 'Nokia (AI infra pivot)',
+    exchange: 'NYSE',
+    price: 15.21,
+    prevClose: 14.18,
+    tags: [{label: 'Networking', cls: 'networking'}],
+    keyMetric: 'BREAKOUT: +7.3%, above $15 strike & near 52w high $15.32 • NVIDIA $1B stake @ $6.01 • AI-RAN / 6G + NIC silicon pivot'
+  },
+
+  // ===== Hyperscalers (Capex Setters) =====
+  {
+    ticker: 'MSFT', category: 'hyperscaler',
+    name: 'Microsoft',
+    exchange: 'NASDAQ',
+    price: 420.30,
+    prevClose: 419.09,
+    tags: [{label: 'Hyperscaler', cls: 'hyperscaler'}],
+    keyMetric: 'FY26 capex $190B (up from $80B FY25) • Compute constrained narrative • Azure AI accelerating • Memory demand: enormous'
+  },
+  {
+    ticker: 'GOOG', category: 'hyperscaler',
+    name: 'Alphabet',
+    exchange: 'NASDAQ',
+    price: 387.66,
+    prevClose: null,
+    tags: [{label: 'Hyperscaler', cls: 'hyperscaler'}],
+    keyMetric: 'FY26 capex $180-190B • TPU v7 ramping • Google Cloud +63% YoY to $20B • Heavy Samsung HBM + Broadcom ASIC partner'
+  },
+  {
+    ticker: 'META', category: 'hyperscaler',
+    name: 'Meta Platforms',
+    exchange: 'NASDAQ',
+    price: 608.26,
+    prevClose: 610.50,
+    tags: [{label: 'Hyperscaler', cls: 'hyperscaler'}],
+    keyMetric: 'FY26 capex $125-145B • MTIA v3 + Llama 4 training • Big NVDA buyer + Broadcom ASIC partner'
+  },
+  {
+    ticker: 'AMZN', category: 'hyperscaler',
+    name: 'Amazon',
+    exchange: 'NASDAQ',
+    price: 266.32,
+    prevClose: 268.46,
+    tags: [{label: 'Hyperscaler', cls: 'hyperscaler'}],
+    keyMetric: 'FY26 capex $200B • Trainium 3 ramping with MRVL silicon • Bedrock expanding • Largest capex line in the group'
+  }
+];
+
+// Watchlist sub-section definitions
+const stockSections = [
+  { id: 'memory', title: 'Memory Makers', cls: '' },
+  { id: 'supply', title: 'Memory Supply Chain', cls: 'supply' },
+  { id: 'demand', title: 'AI Demand Engines', cls: 'demand' },
+  { id: 'hyperscaler', title: 'Hyperscalers — Capex Setters', cls: 'hyper' }
+];
+
+// ============================================================
+// Earnings Pulse — last quarterly print per ticker
+// ============================================================
+const earnings = [
+  // ===== Memory Makers =====
+  { ticker: 'MU', category: 'memory', date: 'Mar 20', status: 'beat',
+    rev: 'Beat (~$10.5B est)', eps: '~$2.50',
+    takeaway: 'FY26 Q2: GM 68% (above guide). Guiding 81% GM in Q3. 2026 HBM fully sold out at locked pricing.' },
+  { ticker: 'HXSCL', category: 'memory', date: 'Apr 24', status: 'beat',
+    rev: 'KRW 17.6T (record)', eps: 'OP +158% YoY',
+    takeaway: 'Q1 2026: 72% OP margin. 79% GM. HBM forward book sold out 3+ years. Stock hit ATH May 15.' },
+  { ticker: 'SSNLF', category: 'memory', date: 'Apr 30', status: 'beat',
+    rev: 'DS division +48x YoY OP', eps: 'OP KRW 10.5T',
+    takeaway: 'Q1 2026: Memory now 90%+ of corporate earnings. HBM3E qualified at NVIDIA. Foundry still bleeding.' },
+  { ticker: 'SNDK', category: 'memory', date: 'Apr 30', status: 'beat',
+    rev: 'Strong NAND ASP momentum', eps: 'Beat consensus',
+    takeaway: 'Spun out Q4 2025. First full year as standalone. Enterprise SSD shipments accelerating.' },
+
+  // ===== Memory Supply Chain =====
+  { ticker: 'TSM', category: 'supply', date: 'Apr 17', status: 'beat',
+    rev: '$35.9B vs ~$34B est', eps: 'NT$13.94',
+    takeaway: '+35% YoY. GM 66%. CoWoS capacity sold out 2027. Raised AI rev growth to "mid-40% CAGR through 2029".' },
+  { ticker: 'AMKR', category: 'supply', date: 'Apr 28', status: 'inline',
+    rev: 'Inline ~$1.34B', eps: 'Inline',
+    takeaway: 'Steady but unexciting. Q2 guide muted — CoWoS opportunity not yet showing in numbers. Stock lagging group.' },
+  { ticker: 'ATEYY', category: 'supply', date: 'Apr 28', status: 'beat',
+    rev: 'FY25 ¥760B (record)', eps: 'OP ¥240B',
+    takeaway: 'FY26 guide ¥1,350B (+26% YoY) — HBM tester demand. ~70% global test share. Capacity expansion underway.' },
+
+  // ===== AI Demand Engines =====
+  { ticker: 'NVDA', category: 'demand', date: 'May 20', status: 'beat',
+    rev: '$81.6B vs $79.2B est', eps: '$1.87 vs $1.78',
+    takeaway: 'Q2 guide $91B (+13% vs Street). DC $75.2B (+92% YoY). 75% GM. $80B buyback, +25x dividend.' },
+  { ticker: 'AMD', category: 'demand', date: 'Apr 29', status: 'beat',
+    rev: '$10.3B vs $9.84B', eps: '$1.37 vs $1.28',
+    takeaway: 'DC $5.8B (+57% YoY). Q2 guide $11.2B (+6% vs Street). Record $2.6B FCF (3x YoY).' },
+  { ticker: 'AVGO', category: 'demand', date: 'Mar 4', status: 'beat',
+    rev: '$19.3B (+29% YoY)', eps: '$2.10 (+28%)',
+    takeaway: 'AI rev $8.4B (+106% YoY). Q2 guide $22B (+47% YoY). Custom XPU customer count growing.' },
+  { ticker: 'MRVL', category: 'demand', date: 'Late May', status: 'upcoming',
+    rev: 'Reports May 28', eps: 'Est $0.61',
+    takeaway: 'Watch: AWS Trainium ASIC ramp + MSFT Maia commentary. AI rev expected ~$2B run-rate.' },
+  { ticker: 'NOK', category: 'demand', date: 'Apr 24', status: 'beat',
+    rev: '€4.7B (+8% YoY)', eps: 'OP €447M',
+    takeaway: 'Network Infrastructure +11% YoY on AI data center wins. Triggered +36% rally over following 4 weeks.' },
+
+  // ===== Hyperscalers (Capex Setters) =====
+  { ticker: 'MSFT', category: 'hyperscaler', date: 'Apr 30', status: 'beat',
+    rev: '$82.9B vs $81.4B', eps: '$4.27 (+23%)',
+    takeaway: 'Azure +40% YoY (vs guide 37-38%). AI rev $37B run-rate. FY26 capex $190B. Stock -3% on capex concerns.' },
+  { ticker: 'GOOG', category: 'hyperscaler', date: 'Apr 29', status: 'beat',
+    rev: '$109.9B vs $107.1B', eps: '$2.81 vs $2.65',
+    takeaway: 'Cloud +63% to $20B (vs $18.4B est). Capex raised to $180-190B. Cloud backlog now $460B (doubled QoQ).' },
+  { ticker: 'META', category: 'hyperscaler', date: 'Apr 29', status: 'beat',
+    rev: '$56.3B vs $55.5B', eps: '$7.31 vs $6.66',
+    takeaway: 'Capex raised to $125-145B (from $115-135B). Stock -7% post-print on capex jump.' },
+  { ticker: 'AMZN', category: 'hyperscaler', date: 'Apr 30', status: 'beat',
+    rev: '$181.5B vs $177.1B', eps: '$2.78 vs $1.63',
+    takeaway: 'AWS +28% YoY (best in 15 quarters). AWS AI $15B+ run-rate. Q1 capex $43B. FY26 plan $200B.' }
+];
+
+// ============================================================
+// Upcoming Earnings — next 90 days
+// ============================================================
+const upcomingEarnings = [
+  // ===== Memory Makers =====
+  { ticker: 'MU', category: 'memory', date: 'Jun 24 est', days: '~33',
+    estRev: '$33.5B (guide)', estEps: '$19.15 (guide)',
+    priorStatus: 'beat', priorLabel: 'BEAT MAR',
+    watch: '81% GM tracking. HBM4 ramp progress. FY27 capex framework.' },
+  { ticker: 'HXSCL', category: 'memory', date: 'Jul 23', days: '~62',
+    estRev: 'KRW ~22-23T est', estEps: '+OP margin',
+    priorStatus: 'beat', priorLabel: 'BEAT APR',
+    watch: 'HBM4 Rubin allocation. OP margin sustainability above 70%.' },
+  { ticker: 'SSNLF', category: 'memory', date: 'Jul 30', days: '~69',
+    estRev: 'DS division OP +', estEps: 'TBD',
+    priorStatus: 'beat', priorLabel: 'BEAT APR',
+    watch: 'HBM3E qualification at NVIDIA (the catch-up story). Foundry losses.' },
+  { ticker: 'SNDK', category: 'memory', date: 'Aug 13 est', days: '~83',
+    estRev: 'TBD', estEps: 'TBD',
+    priorStatus: 'beat', priorLabel: 'BEAT APR',
+    watch: 'NAND ASP trajectory. Enterprise SSD market share.' },
+
+  // ===== Memory Supply Chain =====
+  { ticker: 'TSM', category: 'supply', date: 'Jul 17', days: '~56',
+    estRev: '~$39-40B (street)', estEps: 'NT$15-16',
+    priorStatus: 'beat', priorLabel: 'BEAT APR',
+    watch: 'CoWoS capacity allocation by customer. FY26 rev guide raise likely.' },
+  { ticker: 'AMKR', category: 'supply', date: 'Jul 28', days: '~67',
+    estRev: '~$1.5B est', estEps: 'Inline',
+    priorStatus: 'inline', priorLabel: 'INLINE APR',
+    watch: 'CoWoS opportunity finally materializing? Arizona facility ramp.' },
+  { ticker: 'ATEYY', category: 'supply', date: 'Jul 30', days: '~69',
+    estRev: '¥320B (Q1)', estEps: '+OP margin',
+    priorStatus: 'beat', priorLabel: 'BEAT APR',
+    watch: 'HBM tester order book. FY27 guide vs ¥1,350B baseline.' },
+
+  // ===== AI Demand Engines =====
+  { ticker: 'MRVL', category: 'demand', date: 'May 27', days: '5',
+    estRev: '$2.40B (+27% YoY)', estEps: '$0.79 (+27% YoY)',
+    priorStatus: 'beat', priorLabel: 'BEAT MAR',
+    watch: 'AWS Trainium 3 ramp. MSFT Maia milestones. AI rev → $2B+/qtr?' },
+  { ticker: 'AVGO', category: 'demand', date: 'Jun 3', days: '12',
+    estRev: '$22.0B (guide) vs $20.5B est', estEps: '$2.30-2.50 est',
+    priorStatus: 'beat', priorLabel: 'BEAT MAR',
+    watch: 'AI rev vs $10.7B guide (+140% YoY). New XPU customer wins.' },
+  { ticker: 'NOK', category: 'demand', date: 'Jul 24', days: '~63',
+    estRev: '€4.7-5.0B est', estEps: 'OP €450-500M',
+    priorStatus: 'beat', priorLabel: 'BEAT APR',
+    watch: 'Network Infra growth. NVIDIA partnership progress. AI-RAN wins.' },
+  { ticker: 'AMD', category: 'demand', date: 'Aug 4', days: '~74',
+    estRev: '~$11.2B (guide)', estEps: '$1.40-1.55 est',
+    priorStatus: 'beat', priorLabel: 'BEAT APR',
+    watch: 'MI350 ramp data. Q3 guide. MSFT/META design-win contribution.' },
+  { ticker: 'NVDA', category: 'demand', date: 'Aug 27', days: '~97',
+    estRev: '~$91B (guide)', estEps: '$2.05-2.20 est',
+    priorStatus: 'beat', priorLabel: 'BEAT MAY',
+    watch: 'Rubin transition pacing. Hyperscaler order book. China commentary.' },
+
+  // ===== Hyperscalers (Capex Setters) =====
+  { ticker: 'GOOG', category: 'hyperscaler', date: 'Jul 28', days: '~67',
+    estRev: '~$115B est', estEps: '~$3.20 est',
+    priorStatus: 'beat', priorLabel: 'BEAT APR',
+    watch: 'Cloud growth (vs 63% Q1). Capex (vs $180-190B). TPU v7 milestones.' },
+  { ticker: 'MSFT', category: 'hyperscaler', date: 'Jul 29', days: '~68',
+    estRev: '~$84-85B est', estEps: '~$4.10-4.30 est',
+    priorStatus: 'beat', priorLabel: 'BEAT APR',
+    watch: 'Azure growth (vs 40% Q3). FY27 capex framework. AI rev run-rate.' },
+  { ticker: 'META', category: 'hyperscaler', date: 'Jul 29', days: '~68',
+    estRev: '~$60B est', estEps: '~$7.40 est',
+    priorStatus: 'beat', priorLabel: 'BEAT APR',
+    watch: 'Capex (vs $125-145B). MTIA v3 progress. ROI commentary on AI spend.' },
+  { ticker: 'AMZN', category: 'hyperscaler', date: 'Jul 31', days: '~70',
+    estRev: '~$165B est', estEps: '~$1.50-1.65 est',
+    priorStatus: 'beat', priorLabel: 'BEAT APR',
+    watch: 'AWS growth (vs 28% Q1). Capex (vs $200B). Trainium 3 monetization.' }
+];
+
+// Signals — current state May 22, 2026 (post-NVDA print)
+const signals = [
+  {
+    name: 'Hyperscaler capex guidance',
+    status: 'green-strong',
+    icon: '🟢🟢',
+    detail: 'Q1 2026: 3 of 4 raised. MSFT $190B, GOOG $180-190B, META $125-145B, AMZN $200B. Google: "compute constrained"'
+  },
+  {
+    name: 'NVIDIA forward demand',
+    status: 'green-strong',
+    icon: '🟢🟢',
+    detail: 'Q1 FY27 ACTUAL: $81.6B (+85% YoY). Q2 guide $91B (vs $81B est) — implies ~$95B run-rate by FY end. DC $75.2B (+92%). 75% GM. No demand softening anywhere'
+  },
+  {
+    name: 'AI cloud revenue traction',
+    status: 'green',
+    icon: '🟢',
+    detail: 'Google Cloud +63% YoY to $20B. Azure AI and Bedrock both expanding. "Compute constrained" language'
+  },
+  {
+    name: 'Custom silicon mix shift',
+    status: 'yellow',
+    icon: '🟡',
+    detail: 'TPU v6, Trainium 2, MTIA all ramping. Total HBM pie still growing but watch for inflection'
+  },
+  {
+    name: 'Spot DRAM prices (rate-of-change)',
+    status: 'green',
+    icon: '🟢',
+    detail: 'Q2 contract +58-63% QoQ on top of Q1 +95%. April MoM spot +5-8% (down from March +14-16%). DDR4 -0.25%/wk (legacy). Decelerating from absurd to very strong — not a turn signal yet'
+  },
+  {
+    name: 'Supplier inventory weeks',
+    status: 'yellow',
+    icon: '🟡',
+    detail: '~2-3 weeks at Big 3 suppliers (extreme tight). Lead times 32-40 weeks. Watch for upticks above 4-5 weeks'
+  },
+  {
+    name: 'HBM contract pricing',
+    status: 'green-strong',
+    icon: '🟢🟢',
+    detail: 'Micron sold out 2026 HBM at locked-in prices. SK Hynix 3+ year HBM forward book. No renegotiation pressure'
+  },
+  {
+    name: 'Customer double-ordering',
+    status: 'green',
+    icon: '🟢',
+    detail: 'Lead times 32-40 weeks — customers far from comfort zone. No cancelation signals yet'
+  },
+  {
+    name: 'Greenfield fab announcements',
+    status: 'yellow',
+    icon: '🟡',
+    detail: 'SECOND YELLOW FLAG: Micron Hiroshima $9.6B (output 2028), ID1 fab (2027), SK Hynix P&T7. Discipline cracking selectively'
+  },
+  {
+    name: 'Memory maker guidance',
+    status: 'green-strong',
+    icon: '🟢🟢',
+    detail: 'Micron GM 56.8% → 68% → 81%. SK Hynix 72% OM. Samsung memory op profit +48x YoY. No softening anywhere'
+  },
+  {
+    name: 'Analyst sentiment',
+    status: 'green-strong',
+    icon: '🟢🟢',
+    detail: 'Estimates revising UP. MU consensus $34 → $58 EPS. $1,000 price targets at DB and DA Davidson'
+  }
+];
+
+// Render stocks (grouped into sub-sections)
+function renderStocks() {
+  const container = document.getElementById('watchlist-container');
+  container.innerHTML = '';
+
+  stockSections.forEach(section => {
+    const matchingStocks = stocks.filter(s => s.category === section.id);
+    if (matchingStocks.length === 0) return;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'watchlist-section';
+
+    const header = document.createElement('div');
+    header.className = 'subsection-header ' + section.cls;
+    header.textContent = section.title;
+    wrapper.appendChild(header);
+
+    const grid = document.createElement('div');
+    grid.className = 'stock-grid';
+
+    matchingStocks.forEach(stock => {
+      const card = document.createElement('div');
+      card.className = 'stock-card';
+
+      let changePct = '—';
+      let changeClass = '';
+      if (stock.price !== null && stock.prevClose !== null) {
+        const change = ((stock.price - stock.prevClose) / stock.prevClose) * 100;
+        changePct = (change >= 0 ? '+' : '') + change.toFixed(2) + '%';
+        changeClass = change >= 0 ? 'up' : 'down';
+      }
+
+      const priceDisplay = stock.price !== null
+        ? '$' + stock.price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})
+        : 'See note';
+      const noteHtml = stock.note ? `<div style="font-size: 10px; color: var(--ink-faded); margin-top: 4px; font-family: var(--font-mono);">${stock.note}</div>` : '';
+
+      card.innerHTML = `
+        <div class="stock-ticker">${stock.ticker}</div>
+        <div class="stock-name">${stock.name} • ${stock.exchange}</div>
+        <div class="stock-price">${priceDisplay}</div>
+        <div class="stock-change ${changeClass}">${changePct}</div>
+        ${noteHtml}
+        <div class="stock-tags">${stock.tags.map(t => `<span class="tag ${t.cls}">${t.label}</span>`).join('')}</div>
+        <div class="stock-key-metric">${stock.keyMetric}</div>
+      `;
+      grid.appendChild(card);
+    });
+
+    wrapper.appendChild(grid);
+    container.appendChild(wrapper);
+  });
+}
+
+// Render signals
+function renderSignals() {
+  const grid = document.getElementById('signals-grid');
+  grid.innerHTML = '';
+  signals.forEach(sig => {
+    const div = document.createElement('div');
+    div.className = `signal ${sig.status}`;
+    div.innerHTML = `
+      <div class="signal-status">${sig.icon}</div>
+      <div class="signal-content">
+        <div class="signal-name">${sig.name}</div>
+        <div class="signal-detail">${sig.detail}</div>
+      </div>
+    `;
+    grid.appendChild(div);
+  });
+}
+
+// Render earnings (grouped into sub-sections, matching watchlist structure)
+function renderEarnings() {
+  const container = document.getElementById('earnings-container');
+  container.innerHTML = '';
+
+  stockSections.forEach(section => {
+    const matching = earnings.filter(e => e.category === section.id);
+    if (matching.length === 0) return;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'watchlist-section';
+
+    const header = document.createElement('div');
+    header.className = 'subsection-header ' + section.cls;
+    header.textContent = section.title;
+    wrapper.appendChild(header);
+
+    const grid = document.createElement('div');
+    grid.className = 'earnings-grid';
+
+    matching.forEach(e => {
+      const card = document.createElement('div');
+      card.className = 'earnings-card';
+      const badgeLabel = e.status === 'upcoming' ? 'UPCOMING' : e.status.toUpperCase();
+      card.innerHTML = `
+        <div class="earnings-card-header">
+          <div class="earnings-ticker">${e.ticker}</div>
+          <div class="earnings-date">${e.date}</div>
+        </div>
+        <div class="earnings-badge ${e.status}">${badgeLabel}</div>
+        <div class="earnings-numbers">
+          <div><span class="label">REV</span> ${e.rev}</div>
+          <div><span class="label">EPS</span> ${e.eps}</div>
+        </div>
+        <div class="earnings-takeaway">${e.takeaway}</div>
+      `;
+      grid.appendChild(card);
+    });
+
+    wrapper.appendChild(grid);
+    container.appendChild(wrapper);
+  });
+}
+
+// Render upcoming earnings preview
+function renderUpcomingEarnings() {
+  const container = document.getElementById('upcoming-earnings-container');
+  container.innerHTML = '';
+
+  stockSections.forEach(section => {
+    const matching = upcomingEarnings.filter(e => e.category === section.id);
+    if (matching.length === 0) return;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'watchlist-section';
+
+    const header = document.createElement('div');
+    header.className = 'subsection-header ' + section.cls;
+    header.textContent = section.title;
+    wrapper.appendChild(header);
+
+    const grid = document.createElement('div');
+    grid.className = 'earnings-grid';
+
+    matching.forEach(e => {
+      const card = document.createElement('div');
+      card.className = 'earnings-card';
+      const isImminent = e.days.replace(/[^0-9]/g, '') !== '' && parseInt(e.days.replace(/[^0-9]/g, ''), 10) <= 14;
+      const countdownClass = isImminent ? 'earnings-countdown imminent' : 'earnings-countdown';
+      card.innerHTML = `
+        <div class="earnings-card-header">
+          <div class="earnings-ticker">${e.ticker}</div>
+          <div class="earnings-date">${e.date} <span class="${countdownClass}">${e.days}d</span></div>
+        </div>
+        <div class="earnings-badge upcoming">UPCOMING</div>
+        <div class="earnings-numbers">
+          <div><span class="label">EST REV</span> ${e.estRev}</div>
+          <div><span class="label">EST EPS</span> ${e.estEps}</div>
+        </div>
+        <div class="earnings-prior">Prior: <span class="pill ${e.priorStatus}">${e.priorLabel}</span></div>
+        <div class="earnings-takeaway"><strong>WATCH:</strong> ${e.watch}</div>
+      `;
+      grid.appendChild(card);
+    });
+
+    wrapper.appendChild(grid);
+    container.appendChild(wrapper);
+  });
+}
+
+// ============================================================
+// Live price refresh (Finnhub free tier)
+// ============================================================
+async function fetchFinnhubQuote(ticker) {
+  const url = `https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${FINNHUB_KEY}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  if (!data.c || data.c === 0) throw new Error('No data for ' + ticker);
+  return { price: data.c, prevClose: data.pc };
+}
+
+async function refreshLivePrices() {
+  // If the workflow didn't substitute the placeholder, stay in snapshot mode.
+  if (!FINNHUB_KEY || FINNHUB_KEY.indexOf('PLACEHOLDER') !== -1) {
+    document.getElementById('last-fetch').textContent = 'snapshot mode (no API key configured)';
+    return;
+  }
+
+  const badge = document.getElementById('live-badge');
+  badge.innerHTML = '<span class="dot"></span>Updating…';
+  badge.className = 'live-badge';
+
+  const updates = await Promise.allSettled(
+    stocks
+      .filter(s => !s.skipLiveFetch)
+      .map(async s => {
+        const quote = await fetchFinnhubQuote(s.ticker);
+        s.price = quote.price;
+        s.prevClose = quote.prevClose;
+      })
+  );
+
+  const successful = updates.filter(u => u.status === 'fulfilled').length;
+  const failed = updates.filter(u => u.status === 'rejected').length;
+
+  if (successful > 0) {
+    badge.innerHTML = '<span class="dot"></span>Live';
+    badge.className = 'live-badge';
+    const now = new Date();
+    document.getElementById('last-fetch').textContent =
+      now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) +
+      (failed > 0 ? ` (${failed} ticker(s) failed)` : '');
+    renderStocks();
+  } else {
+    badge.innerHTML = '<span class="dot"></span>Snapshot (live fetch failed)';
+    badge.className = 'live-badge snapshot';
+    document.getElementById('last-fetch').textContent = 'live fetch failed — showing snapshot';
+  }
+}
+
+// Initial render — snapshot first, then attempt live refresh
+renderStocks();
+renderSignals();
+renderEarnings();
+renderUpcomingEarnings();
+refreshLivePrices();
+</script>
+
+</body>
+</html>

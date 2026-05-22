@@ -1,0 +1,34 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*~
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment files — never commit anything with secrets
+.env
+.env.local
+.env.*.local
+
+# Local "preview" copies of the dashboard with the API key already filled in.
+# If you want to test live mode locally, copy index.html to a file matching
+# one of these names, paste your key in, and Git will ignore it.
+index.local.html
+*.local.html
+
+# Personal research notes — keep these out of the public repo.
+# The dashboard repo should contain only index.html, README.md,
+# .gitignore, and .github/. Anything else is probably personal.
+memory_ai_research_notes.md
+memory_ai_dashboard.html
+notes/
+private/
